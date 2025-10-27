@@ -5,6 +5,40 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 import requests
+import torch
+import torchvision.transforms as transforms
+import pandas as pd
+
+
+PHENOLOGY_STAGES = [
+    "breaking_leaf_buds", "increasing_leaf_size", "colored_leaves",
+    "open_flowers", "ripe_fruits", "ripe_fruit_max",
+    "pre_season", "post_season"
+]
+
+
+@st.cache_resource
+def load_model(model_path, model_class):
+    """
+    Loads in trained mode in eval mode
+
+    model_path to .pth file
+    """
+
+    st.write (f"Loading model from {model_path}...")
+
+    model = model_class(num_classes = len(PHENOLOGY_STAGES)) #8 phenology stages
+    model.load_state_dict(torch.load(model_path, map_location=torch.device('CPU')))
+    
+    #Set model to evaluation mode, disables dropout
+    model.eval()
+
+    st.success(f"Model from {model_path} loaded.")
+    return model
+
+
+
+
 
 
 def crop_metadata_bar(img_array):
