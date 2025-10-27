@@ -33,7 +33,7 @@ def resize_image(img_pil, base_width):
     wpercent = (base_width / float(original_width))
     hsize = int((float(original_height) * float(wpercent)))
 
-    img_resized = img_pil.resize((base_width, hsize)), Image.Resampling.LANCZOS
+    img_resized = img_pil.resize((base_width, hsize), Image.Resampling.LANCZOS)
 
     st.success(f"Image resized to {base_width} x {hsize} from {original_width} x {original_height}.")
     return img_resized
@@ -54,17 +54,38 @@ if uploaded_file:
     image = Image.open(uploaded_file)
 
     image_unprocessed = image
-
-    #Adds a checkbox to crop bar if present
-    st.header("1. Crop Image")
-    crop_image = st.checkbox("Crop black metadata bar")
-
     image_to_display = image 
 
+    st.image(image_to_display, caption="Uploaded Berry Image", width="stretch")
+
+    #Adds a checkbox to crop bar if present
+    st.header("1. Crop Out Metadata Bar in Image")
+    crop_image = st.checkbox("Crop black metadata bar")
+
+
+
     if crop_image:
-        image_array = np.array(image)
+        image_array = np.array(image_unprocessed)
         cropped_array = crop_metadata_bar(image_array)
-        image_to_display = cropped_array
+        # image_to_display = cropped_array
+        image_unprocessed = Image.fromarray(cropped_array)
+
+    st.header("2. Resize Image")
+
+    resize_options = ["original", 64, 128, 256, 512, 1024] #1024 is max option, as it was used for training.
+
+    selected_width = st.selectbox("Resize image (keep orig. aspect ratio):",
+                     options = resize_options)
+
+    image_to_display = image_unprocessed
+
+    if selected_width != "original":
+        base_width = int(selected_width)
+
+        image_to_display = resize_image(image_unprocessed, base_width)
+
+    st.header("3. Processed Image")
+    st.image(image_to_display, caption="Processed Image", width="stretch")
 
 
 # else:
@@ -77,5 +98,4 @@ if uploaded_file:
 
 # img_uploaded.image(image, use_column_width=True)
 
-    st.image(image_to_display, caption="Uploaded Berry Image", width="stretch")
 
