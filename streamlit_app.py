@@ -7,7 +7,7 @@ from PIL import Image
 import requests
 
 
-def crop_metadata_bar_numpy(img_array):
+def crop_metadata_bar(img_array):
     """
     Crops the image to a fixed height of 3192px from the top.
     """
@@ -24,6 +24,23 @@ def crop_metadata_bar_numpy(img_array):
         return img_array
 
 
+def resize_image(img_pil, base_width):
+    """
+    Resizes image according to new base_width (base 64) while maintaining originalo aspect ratio.
+    """
+    original_width, original_height = img_pil.size
+
+    wpercent = (base_width / float(original_width))
+    hsize = int((float(original_height) * float(wpercent)))
+
+    img_resized = img_pil.resize((base_width, hsize)), Image.Resampling.LANCZOS
+
+    st.success(f"Image resized to {base_width} x {hsize} from {original_width} x {original_height}.")
+    return img_resized
+
+
+
+
 
 st.title("🎈 Berry Analysis")
 st.write(
@@ -36,14 +53,17 @@ uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 if uploaded_file:
     image = Image.open(uploaded_file)
 
+    image_unprocessed = image
+
     #Adds a checkbox to crop bar if present
+    st.header("1. Crop Image")
     crop_image = st.checkbox("Crop black metadata bar")
 
     image_to_display = image 
 
     if crop_image:
         image_array = np.array(image)
-        cropped_array = crop_metadata_bar_numpy(image_array)
+        cropped_array = crop_metadata_bar(image_array)
         image_to_display = cropped_array
 
 
@@ -57,4 +77,5 @@ if uploaded_file:
 
 # img_uploaded.image(image, use_column_width=True)
 
-    st.image(image_to_display, caption="Uploaded Berry Image", use_container_width=True, width="stretch")
+    st.image(image_to_display, caption="Uploaded Berry Image", width="stretch")
+
