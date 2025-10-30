@@ -189,31 +189,70 @@ def upload_process_img():
 
 def page_analysis():
     """
-    Page 2: Image analysis with trained models. WIP.
+    Page 2: Image analysis with trained models.
     """
     st.title("Berry Analysis - Analyze")
-    st.write("WIP: Analyze the processed image")
+    st.write("Select a model to analyze your processed image.")
 
     image_to_analyze = st.session_state.processed_image
 
     if image_to_analyze:
-        st.write("Processed image")
+        st.write("Processed image:")
         st.image(image_to_analyze, width="stretch")
 
+        # --- ADDED MODEL SELECTION ---
         model_choice = st.selectbox(
             "Choose a model:",
             ("ViT (ViT_B_32)", "ResNet50 (Placeholder)")
         )
 
-        if st.button("Run Model"):
+        if st.button(f"Run {model_choice} Model"):
+            
+            # Select the correct model
+            model_to_run = None
+            if model_choice.startswith("ViT"):
+                model_to_run = vit_model
+            else:
+                model_to_run = resnet_model
+            
+            # Checks if model is loaded
+            if model_to_run is None or isinstance(model_to_run, str):
+                st.error(f"Model '{model_choice}' is not loaded or failed to load.")
+                st.warning("Check the error messages at the top of the app.")
+            else:
+                with st.spinner("Model is analyzing..."):
+                    
+                    # 1. Preprocess the image
+                    image_tensor = preprocess_image(image_to_analyze)
+                    
+                    # 2. Run inference
+                    with torch.no_grad():
+                        logits = model_to_run(image_tensor)
+                        # Convert to probabilities
+                        probabilities = torch.nn.functional.softmax(logits, dim=1)
+                    
+                    # 3. Get top prediction
+                    top_prob = probabilities[0].max().item()
+                    top_class_index = probabilities[0].argmax().item()
+                    top_class_name = PHENOLOGY_STAGES[top_class_index]
 
-            st.success("Placeholder")
+                    st.success(f"Analysis Complete! Model: {model_choice}")
+                    
+                    # 4. Display Metric
+                    st.metric(
+                        label=f"Top Prediction",
+                        value=f"{top_class_name}",
+                        delta=f"Confidence: {top_prob:.2%}",
+                        delta_color="normal"
+                    )
 
-
-        #WIP: models are not staged within Streamlit.
+                    # 5. Display Chart
+                    st.subheader("All Class Probabilities")
+                    probs_df = pd.DataFrame(probabilities[0].numpy(), index=PHENOLOGY_STAGES, columns=["Probability"])
+                    st.bar_chart(probs_df)
 
     else:
-        st.warning("Placeholder for no image uploaded")
+        st.warning("No image was processed. Please go back to Step 1.")
     
     st.button("Back", on_click=prev_page)
 
