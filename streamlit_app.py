@@ -116,7 +116,8 @@ if 'processed_image' not in st.session_state:
 
 
 resnet_model = "Placeholder for ResNet50"
-vit_model = "Placeholder for ViT"
+# vit_model = "Placeholder for ViT"
+vit_model = load_model(REPO_ID, MODEL_FILENAME, ViT)
 cnn_model = "Placeholder for CNN"
 exp_model = "Placeholder for Expert"
 
@@ -203,7 +204,7 @@ def page_analysis():
         # --- ADDED MODEL SELECTION ---
         model_choice = st.selectbox(
             "Choose a model:",
-            ("ViT (ViT_B_32)", "ResNet50 (Placeholder)")
+            ("ViT (ViT_B_16)", "ResNet50 (Placeholder)")
         )
 
         if st.button(f"Run {model_choice} Model"):
@@ -218,7 +219,7 @@ def page_analysis():
             # Checks if model is loaded
             if model_to_run is None or isinstance(model_to_run, str):
                 st.error(f"Model '{model_choice}' is not loaded or failed to load.")
-                st.warning("Check the error messages at the top of the app.")
+                st.warning("Placeholder - model integration not fully functional.")
             else:
                 with st.spinner("Model is analyzing..."):
                     

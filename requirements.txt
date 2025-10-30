@@ -1,1 +1,10 @@
 streamlit
+torch
+torchvision
+pandas
+numpy
+Pillow
+huggingface_hub
+requests
+opencv-python
+matplotlib
