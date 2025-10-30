@@ -8,37 +8,66 @@ import requests
 import torch
 import torchvision.transforms as transforms
 import pandas as pd
+import torch.nn as nn
+from huggingface_hub import hf_hub_download
 
+from models_J import ViT, ResNet50
 
+# Berry Class Stages/Classes
 PHENOLOGY_STAGES = [
     "breaking_leaf_buds", "increasing_leaf_size", "colored_leaves",
     "open_flowers", "ripe_fruits", "ripe_fruit_max",
     "pre_season", "post_season"
 ]
 
+REPO_ID = "andrewkota/Berries_ViT32_TestStreamlit"
+MODEL_FILENAME = "vit_bs32_ep40_katlian.pth"
 
 @st.cache_resource
-def load_model(model_path, model_class):
+def load_model(repo_id, filename, model_class):
     """
     Loads in trained mode in eval mode
 
     model_path to .pth file
     """
 
-    st.write (f"Loading model from {model_path}...")
+    st.info(f"Downloading/loading model: {filename} from {repo_id}...")
 
-    model = model_class(num_classes = len(PHENOLOGY_STAGES)) #8 phenology stages
-    model.load_state_dict(torch.load(model_path, map_location=torch.device('CPU')))
+    try:
+        model_path = hf_hub_download(repo_id=repo_id, filename=filename)
+    except Exception as e:
+        st.error(f"Error downloading model: {e}")
+        st.error("Please check your REPO_ID, MODEL_FILENAME, and that the file is public.")
+        return None
+
+    st.info(f"File downloaded. Loading model from {model_path}...")
+
+    try:
+        # Initialize your model class
+        model = model_class(num_classes=len(PHENOLOGY_STAGES))
+        
+        model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+        
+        # Set to evaluation mode
+        model.eval()
+        st.success(f"Model {filename} has been loaded.")
+        return model
     
-    #Set model to evaluation mode, disables dropout
-    model.eval()
-
-    st.success(f"Model from {model_path} loaded.")
-    return model
-
-
+    except Exception as e:
+        st.error(f"Error loading model from state_dict: {e}")
+        st.error("Test.")
+        return None
+    
 
 
+def preprocess_image(image_pil):
+    """
+    Converts an image to pytorch tensor
+    """
+
+    test_transform = transforms.Compose([transforms.Resize(224), transforms.CenterCrop((224, 224)), transforms.ToTensor(), transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+    image_tensor = test_transform(image_pil).unsqueeze(0)
+    return image_tensor
 
 
 def crop_metadata_bar(img_array):
@@ -85,6 +114,11 @@ if 'page' not in st.session_state:
 if 'processed_image' not in st.session_state:
     st.session_state.processed_image = None    
 
+
+resnet_model = "Placeholder for ResNet50"
+vit_model = "Placeholder for ViT"
+cnn_model = "Placeholder for CNN"
+exp_model = "Placeholder for Expert"
 
 st.title("🎈 Berry Analysis")
 st.write(
@@ -165,6 +199,11 @@ def page_analysis():
     if image_to_analyze:
         st.write("Processed image")
         st.image(image_to_analyze, width="stretch")
+
+        model_choice = st.selectbox(
+            "Choose a model:",
+            ("ViT (ViT_B_32)", "ResNet50 (Placeholder)")
+        )
 
         if st.button("Run Model"):
 
