@@ -21,7 +21,11 @@ PHENOLOGY_STAGES = [
 ]
 
 REPO_ID = "andrewkota/Berries_ViT32_TestStreamlit"
-MODEL_FILENAME = "vit_bs32_ep40_katlian.pth"
+MODEL_FILENAME_ViT40_Katlian = "vit_bs32_ep40_katlian.pth"
+MODEL_FILENAME_ViT100_Katlian = "vit_bs42_ep100_katlian.pth.pth"
+MODEL_FILENAME_Exp_V1 = "exp_8stages_v1.pth"
+MODEL_FILENAME_ResNet100_FOB = "resnet50_bs42_ep100_fob.pth"
+
 
 @st.cache_resource
 def load_model(repo_id, filename, model_class):
@@ -115,11 +119,31 @@ if 'processed_image' not in st.session_state:
     st.session_state.processed_image = None    
 
 
-resnet_model = "Placeholder for ResNet50"
+resnet_model = load_model(REPO_ID, MODEL_FILENAME_ResNet100_FOB, ResNet50)
 # vit_model = "Placeholder for ViT"
-vit_model = load_model(REPO_ID, MODEL_FILENAME, ViT)
+vit_model = load_model(REPO_ID, MODEL_FILENAME_ViT100_Katlian, ViT)
+vit40_model = load_model(REPO_ID, MODEL_FILENAME_ViT40_Katlian, ViT)
 cnn_model = "Placeholder for CNN"
-exp_model = "Placeholder for Expert"
+exp_model = load_model(REPO_ID, MODEL_FILENAME_Exp_V1, Expert_V1)
+
+MODELS_TO_LOAD = {
+    "ViT (100 Epochs, Katlian)": {
+        "filename": MODEL_FILENAME_ViT100_Katlian,
+        "class": ViT
+    },
+    "ViT (40 Epochs, Katlian)": {
+        "filename": MODEL_FILENAME_ViT40_Katlian,
+        "class": ViT
+    },
+    "ResNet50 (FOB)": {
+        "filename": MODEL_FILENAME_ResNet100_FOB,
+        "class": ResNet50
+    },
+    "Expert": {
+        "filename": MODEL_FILENAME_Exp_V1,
+        "class": Expert_V1
+    }
+
 
 st.title("🎈 Berry Analysis")
 st.write(
@@ -201,10 +225,9 @@ def page_analysis():
         st.write("Processed image:")
         st.image(image_to_analyze, width="stretch")
 
-        # --- ADDED MODEL SELECTION ---
         model_choice = st.selectbox(
             "Choose a model:",
-            ("ViT (ViT_B_16)", "ResNet50 (Placeholder)")
+            ("ViT (ViT_B_16 - Katlian)", "ResNet50 (Katlian)")
         )
 
         if st.button(f"Run {model_choice} Model"):

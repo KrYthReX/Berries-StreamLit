@@ -63,6 +63,27 @@ class MobileNetV3Large(nn.Module):
 
     def forward(self, x):
         return self.model(x)
+    
+class Expert_V1(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+        self.conv = nn.Sequential(
+            nn.Conv2d(3, 32, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(32, 64, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(64, 128, 3, padding=1),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d((1, 1))
+        )
+        self.fc = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(128, 256),
+            nn.ReLU(),
+            nn.Linear(256, num_classes)
+        )
 
 class EfficientNetB0(nn.Module):
     def __init__(self, num_classes):
@@ -72,6 +93,7 @@ class EfficientNetB0(nn.Module):
 
     def forward(self, x):
         return self.model(x)
+    
 def get_model(name: str, num_classes: int):
     name = name.lower()
     if name == "simple_cnn":
