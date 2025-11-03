@@ -35,7 +35,7 @@ def load_model(repo_id, filename, model_class):
     model_path to .pth file
     """
 
-    st.info(f"Downloading/loading model: {filename} from {repo_id}...")
+    st.toast(f"Downloading/loading model: {filename} from {repo_id}...")
 
     try:
         model_path = hf_hub_download(repo_id=repo_id, filename=filename)
@@ -44,7 +44,7 @@ def load_model(repo_id, filename, model_class):
         st.error("Please check your REPO_ID, MODEL_FILENAME, and that the file is public.")
         return None
 
-    st.info(f"File downloaded. Loading model from {model_path}...")
+    st.toast(f"File downloaded. Loading model from {model_path}...")
 
     try:
         # Initialize your model class
@@ -87,7 +87,7 @@ def crop_metadata_bar(img_array):
         st.success(f"Cropped image from {img_height}px to {target_height}px height.")
         return img_array[:target_height, :, :]
     else:
-        st.info("Image height is already at or below target crop height. No crop needed.")
+        st.toast("Image height is already at or below target crop height. No crop needed.")
         return img_array
 
 
@@ -148,7 +148,7 @@ MODELS_TO_LOAD = {
 }
 
 LOADED_MODELS = {}
-st.info("Loading models")
+st.toast("Loading models")
 
 for model_name, model_info in MODELS_TO_LOAD.items():
     # Check if the filename is a placeholder
@@ -179,7 +179,7 @@ def upload_process_img():
     First page: Holds image uploading, metabar crop, and resizing functionality. Documentation WIP.
     """
 
-    st.write("This is currently a work in progress app, built to analyze and classify images uploaded by the user.")
+    st.toast("This is currently a work in progress app, built to analyze and classify images uploaded by the user.")
 
     uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
     if uploaded_file:
@@ -252,7 +252,7 @@ def page_analysis():
         available_models = [name for name, model in LOADED_MODELS.items() if not isinstance(model, str)]
         if not (available_models):
             st.error("No models were loaded, check connection between HuggingFace directory and Python file to ensure functionality.")
-            st.buttoin("Back", on_click=prev_page)
+            st.button("Back", on_click=prev_page)
             return
         
 
