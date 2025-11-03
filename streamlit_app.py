@@ -192,6 +192,7 @@ def upload_process_img():
 
         #Adds a checkbox to crop bar if present
         st.header("1. Crop Out Metadata Bar in Image")
+        st.caption("**Why?** The model was not trained on images containing the black metadata bar.Analyzing an image with the bar may cause the model to behave in erractic ways. We recommend cropping for best results if the bar is present.")
         crop_image = st.checkbox("Crop black metadata bar")
 
 
@@ -203,6 +204,9 @@ def upload_process_img():
             image_unprocessed = Image.fromarray(cropped_array)
 
         st.header("2. Resize Image")
+
+        st.caption(
+            "**Why**? The model was trained on resized images to conserve on storage space. Resizing while maintaining the aspect ratio speeds up analysis and condenses file size significantly. We recommend *1024* as a good balance, as it holds the best balance between size, quality, and clarity.") 
 
         # resize_options = ["original", 64, 128, 256, 512, 1024] #1024 is max option, as it was used for training.
         resize_options = ["original", 64, 128, 256, 512, 1024, 2048, 4096] #1024 is max option, as it was used for training.
