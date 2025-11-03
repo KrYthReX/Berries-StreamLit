@@ -11,7 +11,7 @@ import pandas as pd
 import torch.nn as nn
 from huggingface_hub import hf_hub_download
 
-from models_J import ViT, ResNet50
+from models_J import ViT, ResNet50, Expert_V1
 
 # Berry Class Stages/Classes
 PHENOLOGY_STAGES = [
@@ -119,12 +119,12 @@ if 'processed_image' not in st.session_state:
     st.session_state.processed_image = None    
 
 
-resnet_model = load_model(REPO_ID, MODEL_FILENAME_ResNet100_FOB, ResNet50)
-# vit_model = "Placeholder for ViT"
-vit_model = load_model(REPO_ID, MODEL_FILENAME_ViT100_Katlian, ViT)
-vit40_model = load_model(REPO_ID, MODEL_FILENAME_ViT40_Katlian, ViT)
+# resnet_model = load_model(REPO_ID, MODEL_FILENAME_ResNet100_FOB, ResNet50)
+# # vit_model = "Placeholder for ViT"
+# vit_model = load_model(REPO_ID, MODEL_FILENAME_ViT100_Katlian, ViT)
+# vit40_model = load_model(REPO_ID, MODEL_FILENAME_ViT40_Katlian, ViT)
 cnn_model = "Placeholder for CNN"
-exp_model = load_model(REPO_ID, MODEL_FILENAME_Exp_V1, Expert_V1)
+# exp_model = load_model(REPO_ID, MODEL_FILENAME_Exp_V1, Expert_V1)
 
 MODELS_TO_LOAD = {
     "ViT (100 Epochs, Katlian)": {
@@ -144,6 +144,29 @@ MODELS_TO_LOAD = {
         "class": Expert_V1
     }
 
+    # Add future models here
+}
+
+LOADED_MODELS = {}
+st.info("Loading models")
+
+for model_name, model_info in MODELS_TO_LOAD.items():
+    # Check if the filename is a placeholder
+    if "YOUR_" in model_info["filename"]:
+        st.warning(f"Skipping load for '{model_name}': Please update the placeholder filename.")
+        LOADED_MODELS[model_name] = "Placeholder" # Add as placeholder
+    else:
+        try:
+            # Try loading the model
+            model = load_model(REPO_ID, model_info["filename"], model_info["class"])
+            if model:
+                LOADED_MODELS[model_name] = model
+            else:
+                st.error(f"Failed to load '{model_name}'.")
+                LOADED_MODELS[model_name] = "Failed" # Mark as failed
+        except Exception as e:
+            st.error(f"An error occurred while loading '{model_name}': {e}")
+            LOADED_MODELS[model_name] = "Failed"
 
 st.title("🎈 Berry Analysis")
 st.write(
@@ -225,19 +248,21 @@ def page_analysis():
         st.write("Processed image:")
         st.image(image_to_analyze, width="stretch")
 
-        model_choice = st.selectbox(
-            "Choose a model:",
-            ("ViT (ViT_B_16 - Katlian)", "ResNet50 (Katlian)")
-        )
+
+        available_models = [name for name, model in LOADED_MODELS.items() if not isinstance(model, str)]
+        if not (available_models):
+            st.error("No models were loaded, check connection between HuggingFace directory and Python file to ensure functionality.")
+            st.buttoin("Back", on_click=prev_page)
+            return
+        
+
+
+        model_choice = st.selectbox("Choose a model:", available_models)
 
         if st.button(f"Run {model_choice} Model"):
             
             # Select the correct model
-            model_to_run = None
-            if model_choice.startswith("ViT"):
-                model_to_run = vit_model
-            else:
-                model_to_run = resnet_model
+            model_to_run = LOADED_MODELS[model_choice]
             
             # Checks if model is loaded
             if model_to_run is None or isinstance(model_to_run, str):
