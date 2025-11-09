@@ -85,6 +85,10 @@ class Expert_V1(nn.Module):
             nn.Linear(256, num_classes)
         )
 
+        def forward(self, x):
+            x = self.conv(x)
+            return self.fc(x)
+
 class EfficientNetB0(nn.Module):
     def __init__(self, num_classes):
         super().__init__()

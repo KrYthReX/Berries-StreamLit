@@ -1,4 +1,4 @@
-# streamlit run streamlit_app.py
+# streamlit run streamlit_app_modified.py
 
 import streamlit as st
 # import cv2
@@ -13,6 +13,8 @@ from huggingface_hub import hf_hub_download
 
 from models_J import ViT, ResNet50, Expert_V1
 
+st.set_page_config(layout="wide")
+
 # Berry Class Stages/Classes
 PHENOLOGY_STAGES = [
     "breaking_leaf_buds", "increasing_leaf_size", "colored_leaves",
@@ -20,6 +22,7 @@ PHENOLOGY_STAGES = [
     "pre_season", "post_season"
 ]
 
+#File path/names for models that were uploaded to HuggingFace
 REPO_ID = "andrewkota/Berries_ViT32_TestStreamlit"
 MODEL_FILENAME_ViT40_Katlian = "vit_bs32_ep40_katlian.pth"
 MODEL_FILENAME_ViT100_Katlian = "vit_bs42_ep100_katlian.pth.pth"
@@ -31,13 +34,9 @@ MODEL_FILENAME_ResNet100_FOB = "resnet50_bs42_ep100_fob.pth"
 def load_model(repo_id, filename, model_class):
     """
     Loads in trained mode in eval mode
-
     model_path to .pth file
     """
-
     st.info(f"Downloading/loading model: {filename} from {repo_id}...")
-    # st.toast(f"Downloading/loading model: {filename} from {repo_id}...")
-
     try:
         model_path = hf_hub_download(repo_id=repo_id, filename=filename)
     except Exception as e:
@@ -46,52 +45,49 @@ def load_model(repo_id, filename, model_class):
         return None
 
     st.info(f"File downloaded. Loading model from {model_path}...")
-    # st.toast(f"File downloaded. Loading model from {model_path}...")
 
     try:
-        # Initialize your model class
         model = model_class(num_classes=len(PHENOLOGY_STAGES))
-        
         model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-        
-        # Set to evaluation mode
         model.eval()
         st.success(f"Model {filename} has been loaded.")
         return model
-    
     except Exception as e:
         st.error(f"Error loading model from state_dict: {e}")
         st.error("Test.")
         return None
-    
+
 
 
 def preprocess_image(image_pil):
     """
     Converts an image to pytorch tensor
     """
-
-    test_transform = transforms.Compose([transforms.Resize(224), transforms.CenterCrop((224, 224)), transforms.ToTensor(), transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+    test_transform = transforms.Compose([
+        transforms.Resize(224),
+        transforms.CenterCrop((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
     image_tensor = test_transform(image_pil).unsqueeze(0)
     return image_tensor
+
 
 
 def crop_metadata_bar(img_array):
     """
     Crops the image to a fixed height of 3192px from the top.
     """
-    
     img_height = img_array.shape[0]
     target_height = 3192
     
     if img_height > target_height:
-       
         st.success(f"Cropped image from {img_height}px to {target_height}px height.")
         return img_array[:target_height, :, :]
     else:
-        # st.toast("Image height is already at or below target crop height. No crop needed.")
         st.info("Image height is already at or below target crop height. No crop needed.")
         return img_array
+
 
 
 def resize_image(img_pil, base_width):
@@ -99,35 +95,13 @@ def resize_image(img_pil, base_width):
     Resizes image according to new base_width (base 64) while maintaining originalo aspect ratio.
     """
     original_width, original_height = img_pil.size
-
     wpercent = (base_width / float(original_width))
     hsize = int((float(original_height) * float(wpercent)))
-
     img_resized = img_pil.resize((base_width, hsize), Image.Resampling.LANCZOS)
-
     st.success(f"Image resized to {base_width} x {hsize} from {original_width} x {original_height}.")
     return img_resized
 
 
-def next_page():
-    st.session_state.page += 1
-
-def prev_page():
-    st.session_state.page -= 1
-
-
-if 'page' not in st.session_state:
-    st.session_state.page = 1
-if 'processed_image' not in st.session_state:
-    st.session_state.processed_image = None    
-
-
-# resnet_model = load_model(REPO_ID, MODEL_FILENAME_ResNet100_FOB, ResNet50)
-# # vit_model = "Placeholder for ViT"
-# vit_model = load_model(REPO_ID, MODEL_FILENAME_ViT100_Katlian, ViT)
-# vit40_model = load_model(REPO_ID, MODEL_FILENAME_ViT40_Katlian, ViT)
-cnn_model = "Placeholder for CNN"
-# exp_model = load_model(REPO_ID, MODEL_FILENAME_Exp_V1, Expert_V1)
 
 MODELS_TO_LOAD = {
     "ViT (100 Epochs, Katlian)": {
@@ -146,177 +120,150 @@ MODELS_TO_LOAD = {
         "filename": MODEL_FILENAME_Exp_V1,
         "class": Expert_V1
     }
-
-    # Add future models here
 }
 
 LOADED_MODELS = {}
-# st.toast("Loading models")
-st.info("Loading models")
-
+st.info("Loading models...")
 for model_name, model_info in MODELS_TO_LOAD.items():
-    # Check if the filename is a placeholder
     if "YOUR_" in model_info["filename"]:
         st.warning(f"Skipping load for '{model_name}': Please update the placeholder filename.")
-        LOADED_MODELS[model_name] = "Placeholder" # Add as placeholder
+        LOADED_MODELS[model_name] = "Placeholder"
     else:
         try:
-            # Try loading the model
             model = load_model(REPO_ID, model_info["filename"], model_info["class"])
             if model:
                 LOADED_MODELS[model_name] = model
             else:
                 st.error(f"Failed to load '{model_name}'.")
-                LOADED_MODELS[model_name] = "Failed" # Mark as failed
+                LOADED_MODELS[model_name] = "Failed"
         except Exception as e:
             st.error(f"An error occurred while loading '{model_name}': {e}")
             LOADED_MODELS[model_name] = "Failed"
 
-st.title("🎈 Berry Analysis")
-st.write(
-    # "Let's start building! For help and inspiration, head over to [docs.streamlit.io](https://docs.streamlit.io/)."
-)
 
+st.title("🎈 Berry Image Analyzer")
+st.info("This app analyzes multiple images. Set your processing and analysis settings *first*, then upload your images.")
 
-def upload_process_img():
-    """
-    First page: Holds image uploading, metabar crop, and resizing functionality. Documentation WIP.
-    """
+st.header("1. Processing Settings")
+st.caption("These settings will be applied to *all* uploaded images.")
 
-    st.info("This is currently a work in progress app, built to analyze and classify images uploaded by the user.")
-    # st.toast("This is currently a work in progress app, built to analyze and classify images uploaded by the user.")
+st.subheader("Crop Out Metadata Bar")
+st.caption("**Why?** The model was not trained on images containing the black metadata bar. We recommend cropping for best results if the bar is present to reduce model hallucinations.")
+crop_image = st.checkbox("Crop black metadata bar")
 
-    uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
-    if uploaded_file:
-        image = Image.open(uploaded_file)
-
-        image_unprocessed = image
-        image_to_display = image 
-
-        st.image(image_to_display, caption="Uploaded Berry Image", width="stretch")
-
-        #Adds a checkbox to crop bar if present
-        st.header("1. Crop Out Metadata Bar in Image")
-        st.caption("**Why?** The model was not trained on images containing the black metadata bar.Analyzing an image with the bar may cause the model to behave in erractic ways. We recommend cropping for best results if the bar is present.")
-        crop_image = st.checkbox("Crop black metadata bar")
+st.subheader("Resize Image")
+st.caption("**Why**? Resizing speeds up analysis as it reduces file size by up to 90%. We recommend *1024* as a good balance between size, quality, and clarity.")
+resize_options = ["original", 64, 128, 256, 512, 1024, 2048, 4096]
+selected_width = st.selectbox("Resize image (keep orig. aspect ratio):", options=resize_options)
 
 
 
-        if crop_image:
-            image_array = np.array(image_unprocessed)
-            cropped_array = crop_metadata_bar(image_array)
-            # image_to_display = cropped_array
-            image_unprocessed = Image.fromarray(cropped_array)
+st.header("2. Analysis Model")
+st.caption("Choose the model(s) you want to run on all images.")
 
-        st.header("2. Resize Image")
+available_models = [name for name, model in LOADED_MODELS.items() if not isinstance(model, str)]
+model_choices = None
 
-        st.caption(
-            "**Why**? The model was trained on resized images to conserve on storage space. Resizing while maintaining the aspect ratio speeds up analysis and condenses file size significantly. We recommend *1024* as a good balance, as it holds the best balance between size, quality, and clarity.") 
-
-        # resize_options = ["original", 64, 128, 256, 512, 1024] #1024 is max option, as it was used for training.
-        resize_options = ["original", 64, 128, 256, 512, 1024, 2048, 4096] #1024 is max option, as it was used for training.
-
-        selected_width = st.selectbox("Resize image (keep orig. aspect ratio):",
-                        options = resize_options)
-
-        image_to_display = image_unprocessed
-
-        if selected_width != "original":
-            base_width = int(selected_width)
-
-            image_to_display = resize_image(image_unprocessed, base_width)
-
-        st.header("3. Processed Image")
-        st.image(image_to_display, caption="Processed Image", width="stretch")
-
-        st.session_state.processed_image = image_to_display
-        st.button("Next", on_click=next_page)
+if not available_models:
+    st.error("No models were loaded. Check connection and HuggingFace repo.")
+else:
+    model_choices = st.multiselect(
+        "Choose model(s):",
+        available_models,
+        default=available_models[:2] # Default to the first two models
+    )
 
 
-    # else:
-    #     image = Image.open(requests.get("https://picsum.photos/200/120", stream=True).raw)
 
-    # edges = cv2.Canny(np.array(image), 100, 200)
-    # tab1, tab2 = st.tabs(["Detected edges", "Original"])
-    # tab1.image(edges, use_column_width=True)
-    # tab2.image(image, use_column_width=True)
+st.header("3. Upload Images")
 
-    # img_uploaded.image(image, use_column_width=True)
+#Updated to upload multiple files. Won't accept folders, but will accept several images
+uploaded_files = st.file_uploader("Upload one or more images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-
-def page_analysis():
-    """
-    Page 2: Image analysis with trained models.
-    """
-    st.title("Berry Analysis - Analyze")
-    st.write("Select a model to analyze your processed image.")
-
-    image_to_analyze = st.session_state.processed_image
-
-    if image_to_analyze:
-        st.write("Processed image:")
-        st.image(image_to_analyze, width="stretch")
-
-
-        available_models = [name for name, model in LOADED_MODELS.items() if not isinstance(model, str)]
-        if not (available_models):
-            st.error("No models were loaded, check connection between HuggingFace directory and Python file to ensure functionality.")
-            st.button("Back", on_click=prev_page)
-            return
+#Processing and analysis loop
+if uploaded_files:
+    if not model_choices:
+        st.error("Please select at least one model from Step 2 before uploading.")
+    else:
         
+        st.success(f"Processing {len(uploaded_files)} images with {len(model_choices)} model(s)...")
+        
+        # Loop through each uploaded file
+        for uploaded_file in uploaded_files:
+                st.divider()
+                st.subheader(f"--- Analyzing: {uploaded_file.name} ---")
+                
+                try:
+                    image_unprocessed = Image.open(uploaded_file)
+                    
+                    # Create columns for side-by-side view
+                    col1, col2 = st.columns(2)
+                    col1.image(image_unprocessed, caption="Original Image", use_column_width=True)
 
 
-        model_choice = st.selectbox("Choose a model:", available_models)
+                    image_to_display = image_unprocessed
+                    
+                    if crop_image:
+                        image_array = np.array(image_unprocessed)
+                        cropped_array = crop_metadata_bar(image_array)
+                        image_to_display = Image.fromarray(cropped_array)
 
-        if st.button(f"Run {model_choice} Model"):
-            
-            # Select the correct model
-            model_to_run = LOADED_MODELS[model_choice]
-            
-            # Checks if model is loaded
-            if model_to_run is None or isinstance(model_to_run, str):
-                st.error(f"Model '{model_choice}' is not loaded or failed to load.")
-                st.warning("Placeholder - model integration not fully functional.")
-            else:
-                with st.spinner("Model is analyzing..."):
+                    if selected_width != "original":
+                        base_width = int(selected_width)
+                        image_to_display = resize_image(image_to_display, base_width)
+                    
+                    col2.image(image_to_display, caption="Processed Image", use_column_width=True)
+
                     
                     # 1. Preprocess the image
-                    image_tensor = preprocess_image(image_to_analyze)
+                    image_tensor = preprocess_image(image_to_display)
                     
-                    # 2. Run inference
-                    with torch.no_grad():
-                        logits = model_to_run(image_tensor)
-                        # Convert to probabilities
-                        probabilities = torch.nn.functional.softmax(logits, dim=1)
-                    
-                    # 3. Get top prediction
-                    top_prob = probabilities[0].max().item()
-                    top_class_index = probabilities[0].argmax().item()
-                    top_class_name = PHENOLOGY_STAGES[top_class_index]
+                    # 2. Create columns for the results, one for each model
+                    result_columns = st.columns(len(model_choices))
 
-                    st.success(f"Analysis Complete! Model: {model_choice}")
-                    
-                    # 4. Display Metric
-                    st.metric(
-                        label=f"Top Prediction",
-                        value=f"{top_class_name}",
-                        delta=f"Confidence: {top_prob:.2%}",
-                        delta_color="normal"
-                    )
+                    # 3. Loop through each CHOSEN model and run analysis
+                    for i, model_name in enumerate(model_choices):
+                        
+                        # Get the column for this model
+                        with result_columns[i]:
+                            st.subheader(model_name) # Add header for clarity
+                            model_to_run = LOADED_MODELS[model_name]
 
-                    # 5. Display Chart
-                    st.subheader("All Class Probabilities")
-                    probs_df = pd.DataFrame(probabilities[0].numpy(), index=PHENOLOGY_STAGES, columns=["Probability"])
-                    st.bar_chart(probs_df)
+                            if model_to_run is None or isinstance(model_to_run, str):
+                                st.error(f"Model '{model_name}' is not loaded.")
+                                continue # Skip to the next model
 
-    else:
-        st.warning("No image was processed. Please go back to Step 1.")
-    
-    st.button("Back", on_click=prev_page)
+                            with st.spinner(f"Model ({model_name}) is analyzing {uploaded_file.name}..."):
+                                
+                                # 2. Run inference
+                                with torch.no_grad():
+                                    logits = model_to_run(image_tensor)
+                                    probabilities = torch.nn.functional.softmax(logits, dim=1)
+                                
+                                # 3. Get top prediction
+                                top_prob = probabilities[0].max().item()
+                                top_class_index = probabilities[0].argmax().item()
+                                top_class_name = PHENOLOGY_STAGES[top_class_index]
 
+                                st.success(f"Analysis Complete ({model_name})")
+                                
+                                # 4. Display Metric
+                                st.metric(
+                                    label=f"Top Prediction",
+                                    value=f"{top_class_name}",
+                                    delta=f"Confidence: {top_prob:.2%}",
+                                    delta_color="normal"
+                                )
 
+                                # 5. Display Chart
+                                st.subheader("All Class Probabilities")
+                                probs_df = pd.DataFrame(probabilities[0].numpy(), index=PHENOLOGY_STAGES, columns=["Probability"])
+                                st.bar_chart(probs_df)
 
-if st.session_state.page == 1:
-    upload_process_img()
-elif st.session_state.page == 2:
-    page_analysis()
+                except Exception as e:
+                    st.error(f"Failed to process {uploaded_file.name}: {e}")
+
+                st.success("Batch processing complete!")
+
+# if st.session_state.page == 1: ...
+# elif st.session_state.page == 2: ...
