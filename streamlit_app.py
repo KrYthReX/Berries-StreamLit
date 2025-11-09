@@ -191,14 +191,14 @@ if uploaded_files:
         # Loop through each uploaded file
         for uploaded_file in uploaded_files:
                 st.divider()
-                st.subheader(f"--- Analyzing: {uploaded_file.name} ---")
+                st.subheader(f"Analyzing: {uploaded_file.name}")
                 
                 try:
                     image_unprocessed = Image.open(uploaded_file)
                     
                     # Create columns for side-by-side view
                     col1, col2 = st.columns(2)
-                    col1.image(image_unprocessed, caption="Original Image", use_column_width=True)
+                    col1.image(image_unprocessed, caption="Original Image", use_container_width=True)
 
 
                     image_to_display = image_unprocessed
@@ -212,7 +212,7 @@ if uploaded_files:
                         base_width = int(selected_width)
                         image_to_display = resize_image(image_to_display, base_width)
                     
-                    col2.image(image_to_display, caption="Processed Image", use_column_width=True)
+                    col2.image(image_to_display, caption="Processed Image", use_container_width=True)
 
                     
                     # 1. Preprocess the image
@@ -245,7 +245,6 @@ if uploaded_files:
                                 top_class_index = probabilities[0].argmax().item()
                                 top_class_name = PHENOLOGY_STAGES[top_class_index]
 
-                                st.success(f"Analysis Complete ({model_name})")
                                 
                                 # 4. Display Metric
                                 st.metric(
@@ -263,7 +262,7 @@ if uploaded_files:
                 except Exception as e:
                     st.error(f"Failed to process {uploaded_file.name}: {e}")
 
-                st.success("Batch processing complete!")
+                # ...
 
 # if st.session_state.page == 1: ...
 # elif st.session_state.page == 2: ...
