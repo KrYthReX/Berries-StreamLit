@@ -29,7 +29,7 @@ PHENOLOGY_STAGES = [
 #File path/names for models that were uploaded to HuggingFace
 REPO_ID = "andrewkota/Berries_ViT32_TestStreamlit"
 MODEL_FILENAME_ViT40_Katlian = "vit_bs32_ep40_katlian.pth"
-MODEL_FILENAME_ViT100_Katlian = "vit_bs42_ep100_katlian.pth.pth"
+MODEL_FILENAME_ViT100_Katlian = "vit_bs42_ep100_katlian.pth"
 MODEL_FILENAME_Exp_V1 = "exp_8stages_v1.pth"
 MODEL_FILENAME_ResNet100_FOB = "resnet50_bs42_ep100_fob.pth"
 
@@ -211,7 +211,7 @@ if uploaded_files:
 
                     image_datetime = "N/A"
 
-                    if st.session_state_include_datetime:
+                    if st.session_state.include_datetime:
                         try:
                             metadata = image_unprocessed._getexif()
 
