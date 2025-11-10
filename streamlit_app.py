@@ -15,6 +15,10 @@ from models_J import ViT, ResNet50, Expert_V1
 
 st.set_page_config(layout="wide")
 
+#Precursor for data upload export
+if 'analysis_results' not in st.session_state:
+    st.session_state.analysis_results = []
+
 # Berry Class Stages/Classes
 PHENOLOGY_STAGES = [
     "breaking_leaf_buds", "increasing_leaf_size", "colored_leaves",
@@ -173,10 +177,19 @@ else:
         default=available_models[:2] # Default to the first two models
     )
 
+st.header("3. Export Settings")
+st.caption("Settings for CSV export. Results are collected from image uploads, including metadata.")
+include_datetime = st.checkbox(
+    "Include date from image metadata (if available)", 
+    key="include_datetime"
+)
 
+if st.button("Clear Results"):
+    st.session_state.analysis_results = []
+    st.toast("Stored analysis results cleared.")
 
-st.header("3. Upload Images")
-
+st.header("4. Upload Images")
+st.caption("Note: While Streamlit won't accept folders, you can select several images for concurrent processing. We don't recommend selecting more than *200* images at a time.")
 #Updated to upload multiple files. Won't accept folders, but will accept several images
 uploaded_files = st.file_uploader("Upload one or more images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
@@ -195,6 +208,19 @@ if uploaded_files:
                 
                 try:
                     image_unprocessed = Image.open(uploaded_file)
+
+                    image_datetime = "N/A"
+
+                    if st.session_state_include_datetime:
+                        try:
+                            metadata = image_unprocessed._getexif()
+
+                            if metadata:
+                                image_datetime = metadata.get(36867, metadata.get(306, "n/a"))
+                            
+                        except Exception as e:
+                            #Metadata is not present, or issue getting data
+                            pass
                     
                     # Create columns for side-by-side view
                     col1, col2 = st.columns(2)
@@ -259,10 +285,38 @@ if uploaded_files:
                                 probs_df = pd.DataFrame(probabilities[0].numpy(), index=PHENOLOGY_STAGES, columns=["Probability"])
                                 st.bar_chart(probs_df)
 
+                                row = {"File NAme" : uploaded_file.name,
+                                       "Model Name" : model_name,
+                                       "Prediction" : top_class_name,
+                                       "Confidence" : f"{top_prob:.4f}"}
+                                
+                                if st.session_state.include_datetime:
+                                    row["Image Date/Time"] = image_datetime
+                                st.session_state.analysis_results.append(row)
+
                 except Exception as e:
                     st.error(f"Failed to process {uploaded_file.name}: {e}")
 
                 # ...
+
+st.divider()
+st.header("5. Download All Results to CSV")
+st.info(f"You have {len(st.session_state.analysis_results)} analysis results.")
+
+# if st.session_state.analysis_results:
+#     df = pd.DataFrame(st.session_state.analysis_results)
+
+#     cols = ["File Name"]
+#     if "Image Date/Time" in df.columns:
+#         cols.append("Image Date/Time")
+#     cols.extend(["Model Name", "Prediction", "Confidence Score"])
+
+#     existing_cols = [c for c in cols if c in df.columns]
+#     df = df[existing_cols]
+
+
+        # ------------- NOTE: commented out as functionality to export CSV is under consideration.
+                        # if user "only" does 200 images at a time, it means there are 5 separate CSVs for 1000 images.
 
 # if st.session_state.page == 1: ...
 # elif st.session_state.page == 2: ...
