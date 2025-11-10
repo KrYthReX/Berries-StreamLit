@@ -1,19 +1,5 @@
-# 🎈 Blank app template
+# 🎈 Sitka Science Center Berry Phenological Analysis Tool
 
-A simple Streamlit app template for you to modify!
+**https://sitka-berries.streamlit.app/**
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
-
-### How to run it on your own machine
-
-1. Install the requirements
-
-   ```
-   $ pip install -r requirements.txt
-   ```
-
-2. Run the app
-
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+This is a Streamlit app that allows a user to upload several images to be classified within 8 defined phenological stages. Pre-processing is available to the user to crop out a present black metadata bar and resize the image for space and time efficiency. Every image is then run through a selection of trained models including ResNet50, ViT, and a specially trained expert (MoE) model, generating probabilities for a speciic class label and a visualization to show how the model predicted. 
