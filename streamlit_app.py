@@ -189,7 +189,7 @@ if st.button("Clear Results"):
     st.toast("Stored analysis results cleared.")
 
 st.header("4. Upload Images")
-st.caption("Note: While Streamlit won't accept folders, you can select several images for concurrent processing. We don't recommend selecting more than *200* images at a time.")
+st.caption("Note: While Streamlit won't accept folders, you can select several images for concurrent processing. We don't recommend selecting more than *50* images at this time (selecting more many cause instability).")
 #Updated to upload multiple files. Won't accept folders, but will accept several images
 uploaded_files = st.file_uploader("Upload one or more images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
