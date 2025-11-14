@@ -145,7 +145,7 @@ for model_name, model_info in MODELS_TO_LOAD.items():
             LOADED_MODELS[model_name] = "Failed"
 
 
-st.title("🎈 Berry Image Analyzer")
+st.title("🍓 Berry Image Analyzer")
 st.info("This app analyzes multiple images. Set your processing and analysis settings *first*, then upload your images.")
 
 st.header("1. Processing Settings")
@@ -300,7 +300,7 @@ if uploaded_files:
                 # ...
 
 st.divider()
-st.header("5. Download All Results to CSV")
+st.header("5. CSV template")
 st.info(f"You have {len(st.session_state.analysis_results)} analysis results.")
 
 # if st.session_state.analysis_results:
