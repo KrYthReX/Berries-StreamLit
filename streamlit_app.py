@@ -299,24 +299,7 @@ if uploaded_files:
 
                 # ...
 
-st.divider()
-st.header("5. CSV template")
-st.info(f"You have {len(st.session_state.analysis_results)} analysis results.")
 
-# if st.session_state.analysis_results:
-#     df = pd.DataFrame(st.session_state.analysis_results)
-
-#     cols = ["File Name"]
-#     if "Image Date/Time" in df.columns:
-#         cols.append("Image Date/Time")
-#     cols.extend(["Model Name", "Prediction", "Confidence Score"])
-
-#     existing_cols = [c for c in cols if c in df.columns]
-#     df = df[existing_cols]
-
-
-        # ------------- NOTE: commented out as functionality to export CSV is under consideration.
-                        # if user "only" does 200 images at a time, it means there are 5 separate CSVs for 1000 images.
 
 # if st.session_state.page == 1: ...
 # elif st.session_state.page == 2: ...
