@@ -28,10 +28,13 @@ PHENOLOGY_STAGES = [
 
 #File path/names for models that were uploaded to HuggingFace
 REPO_ID = "andrewkota/Berries_ViT32_TestStreamlit"
-MODEL_FILENAME_ViT40_Katlian = "vit_bs32_ep40_katlian.pth"
-MODEL_FILENAME_ViT100_Katlian = "vit_bs42_ep100_katlian.pth"
+# MODEL_FILENAME_ViT40_Katlian = "vit_bs32_ep40_katlian.pth"
+# MODEL_FILENAME_ViT100_Katlian = "vit_bs42_ep100_katlian.pth"
 MODEL_FILENAME_Exp_V1 = "exp_8stages_v1.pth"
-MODEL_FILENAME_ResNet100_FOB = "resnet50_bs42_ep100_fob.pth"
+# MODEL_FILENAME_ResNet100_FOB = "resnet50_bs42_ep100_fob.pth"
+
+MODEL_FILENAME_ViT_ep120 = "vit_bs42_epoch120_all_sites_95_5_focal1.5.pth"
+MODEL_FILENAME_ResNet_ep120 = "resnet50_bs42_ep120_all_sites_95_5_focal1.5.pth"
 
 
 @st.cache_resource
@@ -108,16 +111,16 @@ def resize_image(img_pil, base_width):
 
 
 MODELS_TO_LOAD = {
-    "ViT (100 Epochs, Katlian)": {
-        "filename": MODEL_FILENAME_ViT100_Katlian,
+    "ViT (120 Epochs)": {
+        "filename": MODEL_FILENAME_ViT_ep120,
         "class": ViT
     },
-    "ViT (40 Epochs, Katlian)": {
-        "filename": MODEL_FILENAME_ViT40_Katlian,
-        "class": ViT
-    },
-    "ResNet50 (FOB)": {
-        "filename": MODEL_FILENAME_ResNet100_FOB,
+    # "ViT (40 Epochs)": {
+    #     "filename": MODEL_FILENAME_ViT40_Katlian,
+    #     "class": ViT
+    # },
+    "ResNet50 (120 Epochs)": {
+        "filename": MODEL_FILENAME_ResNet_ep120,
         "class": ResNet50
     },
     "Expert": {
