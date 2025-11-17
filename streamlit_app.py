@@ -303,7 +303,8 @@ if uploaded_files:
 
                             # 4a. Display Metric (Multi-Label)
                             st.metric(
-                                label=f"Predictions (Threshold > {threshold*100}%)",
+                                # label=f"Predictions (Threshold > {threshold*100}%)",
+                                label = f"Predictions (Threshold > 50%)",
                                 value=display_value,
                                 delta=f"Top Confidence: {top_label_confidence:.2%}" if len(predicted_indices) > 0 else None,
                                 delta_color="normal"
