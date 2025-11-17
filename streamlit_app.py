@@ -15,9 +15,9 @@ from models_J import ViT, ResNet50, Expert_V1
 
 st.set_page_config(layout="wide")
 
-#Precursor for data upload export
-if 'analysis_results' not in st.session_state:
-    st.session_state.analysis_results = []
+# #Precursor for data upload export
+# if 'analysis_results' not in st.session_state:
+#     st.session_state.analysis_results = []
 
 # Berry Class Stages/Classes
 PHENOLOGY_STAGES = [
@@ -33,7 +33,7 @@ REPO_ID = "andrewkota/Berries_ViT32_TestStreamlit"
 MODEL_FILENAME_Exp_V1 = "exp_8stages_v1.pth"
 # MODEL_FILENAME_ResNet100_FOB = "resnet50_bs42_ep100_fob.pth"
 
-MODEL_FILENAME_ViT_ep120 = "vit_bs42_epoch120_all_sites_95_5_focal1.5.pth"
+MODEL_FILENAME_ViT_ep120 = "vit_bs42_ep120_all_sites_95_5_focal1.5.pth"
 MODEL_FILENAME_ResNet_ep120 = "resnet50_bs42_ep120_all_sites_95_5_focal1.5.pth"
 
 
@@ -43,7 +43,7 @@ def load_model(repo_id, filename, model_class):
     Loads in trained mode in eval mode
     model_path to .pth file
     """
-    st.info(f"Downloading/loading model: {filename} from {repo_id}...")
+    # st.info(f"Downloading/loading model: {filename} from {repo_id}...")
     try:
         model_path = hf_hub_download(repo_id=repo_id, filename=filename)
     except Exception as e:
@@ -51,20 +51,21 @@ def load_model(repo_id, filename, model_class):
         st.error("Please check your REPO_ID, MODEL_FILENAME, and that the file is public.")
         return None
 
-    st.info(f"File downloaded. Loading model from {model_path}...")
+    # st.info(f"File downloaded. Loading model from {model_path}...")
 
     try:
         model = model_class(num_classes=len(PHENOLOGY_STAGES))
         model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
         model.eval()
-        st.success(f"Model {filename} has been loaded.")
+        # st.success(f"Model {filename} has been loaded.")
         return model
     except Exception as e:
         st.error(f"Error loading model from state_dict: {e}")
         st.error("Test.")
         return None
 
-
+def clear_uploads():
+    st.session_state.file_uploader = []
 
 def preprocess_image(image_pil):
     """
@@ -130,7 +131,7 @@ MODELS_TO_LOAD = {
 }
 
 LOADED_MODELS = {}
-st.info("Loading models...")
+# st.balloons("Loading models...")
 for model_name, model_info in MODELS_TO_LOAD.items():
     if "YOUR_" in model_info["filename"]:
         st.warning(f"Skipping load for '{model_name}': Please update the placeholder filename.")
@@ -180,21 +181,31 @@ else:
         default=available_models[:2] # Default to the first two models
     )
 
-st.header("3. Export Settings")
-st.caption("Settings for CSV export. Results are collected from image uploads, including metadata.")
-include_datetime = st.checkbox(
-    "Include date from image metadata (if available)", 
-    key="include_datetime"
-)
+# st.header("3. Export Settings")
+# st.caption("Settings for CSV export. Results are collected from image uploads, including metadata.")
+# include_datetime = st.checkbox(
+#     "Include date from image metadata (if available)", 
+#     key="include_datetime"
+# )
 
 if st.button("Clear Results"):
     st.session_state.analysis_results = []
     st.toast("Stored analysis results cleared.")
 
-st.header("4. Upload Images")
+st.header("3. Upload Images")
+st.caption("Do not upload more than 50 images at a time. Doing so may cause instability in the app.")
 st.caption("Note: While Streamlit won't accept folders, you can select several images for concurrent processing. We don't recommend selecting more than *50* images at this time (selecting more many cause instability).")
 #Updated to upload multiple files. Won't accept folders, but will accept several images
-uploaded_files = st.file_uploader("Upload one or more images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+# uploaded_files = st.file_uploader("Upload one or more images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+
+uploaded_files = st.file_uploader(
+    "Upload one or more images",
+    type=["jpg", "jpeg", "png"],
+    accept_multiple_files=True,
+    key="file_uploader"
+)
+
+st.button("Clear Uploaded Images", on_click=clear_uploads)
 
 #Processing and analysis loop
 if uploaded_files:
@@ -208,133 +219,135 @@ if uploaded_files:
         for uploaded_file in uploaded_files:
                 st.divider()
                 st.subheader(f"Analyzing: {uploaded_file.name}")
+
+                image_unprocessed = Image.open(uploaded_file)
                 
-                try:
-                    image_unprocessed = Image.open(uploaded_file)
+                # try:
+                #     image_unprocessed = Image.open(uploaded_file)
 
-                    image_datetime = "N/A"
+                #     image_datetime = "N/A"
 
-                    if st.session_state.include_datetime:
-                        try:
-                            metadata = image_unprocessed._getexif()
+                #     if st.session_state.include_datetime:
+                #         try:
+                #             metadata = image_unprocessed._getexif()
 
-                            if metadata:
-                                image_datetime = metadata.get(36867, metadata.get(306, "n/a"))
+                #             if metadata:
+                #                 image_datetime = metadata.get(36867, metadata.get(306, "n/a"))
                             
-                        except Exception as e:
-                            #Metadata is not present, or issue getting data
-                            pass
+                #         except Exception as e:
+                #             #Metadata is not present, or issue getting data
+                #             pass
                     
                     # Create columns for side-by-side view
-                    col1, col2 = st.columns(2)
-                    col1.image(image_unprocessed, caption="Original Image", use_container_width=True)
+                col1, col2 = st.columns(2)
+                col1.image(image_unprocessed, caption="Original Image", use_container_width=True)
 
 
-                    image_to_display = image_unprocessed
+                image_to_display = image_unprocessed
+                
+                if crop_image:
+                    image_array = np.array(image_unprocessed)
+                    cropped_array = crop_metadata_bar(image_array)
+                    image_to_display = Image.fromarray(cropped_array)
+
+                if selected_width != "original":
+                    base_width = int(selected_width)
+                    image_to_display = resize_image(image_to_display, base_width)
+                
+                col2.image(image_to_display, caption="Processed Image", use_container_width=True)
+
+                
+                # 1. Preprocess the image
+                image_tensor = preprocess_image(image_to_display)
+                
+                # 2. Create columns for the results, one for each model
+                result_columns = st.columns(len(model_choices))
+
+                # 3. Loop through each CHOSEN model and run analysis
+                for i, model_name in enumerate(model_choices):
                     
-                    if crop_image:
-                        image_array = np.array(image_unprocessed)
-                        cropped_array = crop_metadata_bar(image_array)
-                        image_to_display = Image.fromarray(cropped_array)
+                    # Get the column for this model
+                    with result_columns[i]:
+                        st.subheader(model_name) # Add header for clarity
+                        model_to_run = LOADED_MODELS[model_name]
 
-                    if selected_width != "original":
-                        base_width = int(selected_width)
-                        image_to_display = resize_image(image_to_display, base_width)
-                    
-                    col2.image(image_to_display, caption="Processed Image", use_container_width=True)
+                        if model_to_run is None or isinstance(model_to_run, str):
+                            st.error(f"Model '{model_name}' is not loaded.")
+                            continue # Skip to the next model
 
-                    
-                    # 1. Preprocess the image
-                    image_tensor = preprocess_image(image_to_display)
-                    
-                    # 2. Create columns for the results, one for each model
-                    result_columns = st.columns(len(model_choices))
-
-                    # 3. Loop through each CHOSEN model and run analysis
-                    for i, model_name in enumerate(model_choices):
-                        
-                        # Get the column for this model
-                        with result_columns[i]:
-                            st.subheader(model_name) # Add header for clarity
-                            model_to_run = LOADED_MODELS[model_name]
-
-                            if model_to_run is None or isinstance(model_to_run, str):
-                                st.error(f"Model '{model_name}' is not loaded.")
-                                continue # Skip to the next model
-
-                            with st.spinner(f"Model ({model_name}) is analyzing {uploaded_file.name}..."):
-                                
-                                # 2. Run inference
-                                with torch.no_grad():
-                                    logits = model_to_run(image_tensor)
-                                    probabilities = torch.nn.functional.softmax(logits, dim=1)
-
-                            if model_name == "Expert":
-                                
-                                # 2a. Get MULTI-LABEL probabilities using sigmoid
-                                probabilities = torch.sigmoid(logits)
-                                probs_np = probabilities[0].numpy()
-                                
-                                # 3a. Get all predictions above a threshold
-                                threshold = 0.5 # Make this a slider? Change threshold to .7?
-                                predicted_indices = (probs_np > threshold).nonzero()[0]
-                                
-                                if len(predicted_indices) > 0:
-                                    predicted_labels = [PHENOLOGY_STAGES[i] for i in predicted_indices]
-                                    # Get the confidence of the top-most prediction from this list
-                                    top_label_confidence = probs_np[predicted_indices].max()
-                                    display_value = ", ".join(predicted_labels)
-                                else:
-                                    display_value = "No labels above threshold"
-                                    top_label_confidence = probs_np.max() # Show highest even if below thresh
-
-                                # 4a. Display Metric (Multi-Label)
-                                st.metric(
-                                    label=f"Predictions (Threshold > {threshold*100}%)",
-                                    value=display_value,
-                                    delta=f"Top Confidence: {top_label_confidence:.2%}" if len(predicted_indices) > 0 else None,
-                                    delta_color="normal"
-                                )
-                                
-                                top_class_index = probs_np.argmax()
-                                top_class_name = PHENOLOGY_STAGES[top_class_index]
-                                top_prob = probs_np[top_class_index]
-
+                        with st.spinner(f"Model ({model_name}) is analyzing {uploaded_file.name}..."):
                             
-                            else:
-                                # 2b. Run original MULTI-CLASS logic
+                            # 2. Run inference
+                            with torch.no_grad():
+                                logits = model_to_run(image_tensor)
                                 probabilities = torch.nn.functional.softmax(logits, dim=1)
-                                probs_np = probabilities[0].numpy()
 
-                                # 3b. Get top prediction
-                                top_prob = probs_np.max()
-                                top_class_index = probs_np.argmax()
-                                top_class_name = PHENOLOGY_STAGES[top_class_index]
-
-                                # 4b. Display Metric (Multi-Class)
-                                st.metric(
-                                    label=f"Top Prediction",
-                                    value=f"{top_class_name}",
-                                    delta=f"Confidence: {top_prob:.2%}",
-                                    delta_color="normal"
-                                )
-
-                            # 5. Display Chart
-                            # - Softmax: Bars will sum to 100%
-                            # - Sigmoid: Bars will NOT sum to 100%
-                            st.subheader("All Class Probabilities")
-                            probs_df = pd.DataFrame(probs_np, index=PHENOLOGY_STAGES, columns=["Probability"])
-                            st.bar_chart(probs_df)
-
-                            # 6. Save results for export
-                            row = {"File NAme" : uploaded_file.name,
-                                "Model Name" : model_name,
-                                "Prediction" : top_class_name, # Saves the highest-prob one
-                                "Confidence" : f"{top_prob:.4f}"}
+                        if model_name == "Expert":
                             
-                            if st.session_state.include_datetime:
-                                row["Image Date/Time"] = image_datetime
-                            st.session_state.analysis_results.append(row)
+                            # 2a. Get MULTI-LABEL probabilities using sigmoid
+                            probabilities = torch.sigmoid(logits)
+                            probs_np = probabilities[0].numpy()
+                            
+                            # 3a. Get all predictions above a threshold
+                            threshold = 0.5 # Make this a slider? Change threshold to .7?
+                            predicted_indices = (probs_np > threshold).nonzero()[0]
+                            
+                            if len(predicted_indices) > 0:
+                                predicted_labels = [PHENOLOGY_STAGES[i] for i in predicted_indices]
+                                # Get the confidence of the top-most prediction from this list
+                                top_label_confidence = probs_np[predicted_indices].max()
+                                display_value = ", ".join(predicted_labels)
+                            else:
+                                display_value = "No labels above threshold"
+                                top_label_confidence = probs_np.max() # Show highest even if below thresh
+
+                            # 4a. Display Metric (Multi-Label)
+                            st.metric(
+                                label=f"Predictions (Threshold > {threshold*100}%)",
+                                value=display_value,
+                                delta=f"Top Confidence: {top_label_confidence:.2%}" if len(predicted_indices) > 0 else None,
+                                delta_color="normal"
+                            )
+                            
+                            top_class_index = probs_np.argmax()
+                            top_class_name = PHENOLOGY_STAGES[top_class_index]
+                            top_prob = probs_np[top_class_index]
+
+                        
+                        else:
+                            # 2b. Run original MULTI-CLASS logic
+                            probabilities = torch.nn.functional.softmax(logits, dim=1)
+                            probs_np = probabilities[0].numpy()
+
+                            # 3b. Get top prediction
+                            top_prob = probs_np.max()
+                            top_class_index = probs_np.argmax()
+                            top_class_name = PHENOLOGY_STAGES[top_class_index]
+
+                            # 4b. Display Metric (Multi-Class)
+                            st.metric(
+                                label=f"Top Prediction",
+                                value=f"{top_class_name}",
+                                delta=f"Confidence: {top_prob:.2%}",
+                                delta_color="normal"
+                            )
+
+                        # 5. Display Chart
+                        # - Softmax: Bars will sum to 100%
+                        # - Sigmoid: Bars will NOT sum to 100%
+                        st.subheader("All Class Probabilities")
+                        probs_df = pd.DataFrame(probs_np, index=PHENOLOGY_STAGES, columns=["Probability"])
+                        st.bar_chart(probs_df)
+
+                        # 6. Save results for export
+                        row = {"File NAme" : uploaded_file.name,
+                            "Model Name" : model_name,
+                            "Prediction" : top_class_name, # Saves the highest-prob one
+                            "Confidence" : f"{top_prob:.4f}"}
+                            
+                            # if st.session_state.include_datetime:
+                            #     row["Image Date/Time"] = image_datetime
+                            # st.session_state.analysis_results.append(row)
 
 
                                 # # 3. Get top prediction
@@ -365,8 +378,8 @@ if uploaded_files:
                                 #     row["Image Date/Time"] = image_datetime
                                 # st.session_state.analysis_results.append(row)
 
-                except Exception as e:
-                    st.error(f"Failed to process {uploaded_file.name}: {e}")
+                    # except Exception as e:
+                    #     st.error(f"Failed to process {uploaded_file.name}: {e}")
 
                 # ...
 
