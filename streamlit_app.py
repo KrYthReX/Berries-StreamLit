@@ -266,7 +266,6 @@ if uploaded_files:
                                     logits = model_to_run(image_tensor)
                                     probabilities = torch.nn.functional.softmax(logits, dim=1)
 
-            # Check if we should use multi-label logic for this model
                             if model_name == "Expert":
                                 
                                 # 2a. Get MULTI-LABEL probabilities using sigmoid
@@ -274,7 +273,7 @@ if uploaded_files:
                                 probs_np = probabilities[0].numpy()
                                 
                                 # 3a. Get all predictions above a threshold
-                                threshold = 0.5 # You can make this a slider!
+                                threshold = 0.5 # Make this a slider? Change threshold to .7?
                                 predicted_indices = (probs_np > threshold).nonzero()[0]
                                 
                                 if len(predicted_indices) > 0:
@@ -294,7 +293,6 @@ if uploaded_files:
                                     delta_color="normal"
                                 )
                                 
-                                # For the CSV row, we'll just save the top prediction for simplicity
                                 top_class_index = probs_np.argmax()
                                 top_class_name = PHENOLOGY_STAGES[top_class_index]
                                 top_prob = probs_np[top_class_index]
@@ -318,8 +316,7 @@ if uploaded_files:
                                     delta_color="normal"
                                 )
 
-                            # 5. Display Chart (This works for both!)
-                            # The bar chart will now clearly show the difference:
+                            # 5. Display Chart
                             # - Softmax: Bars will sum to 100%
                             # - Sigmoid: Bars will NOT sum to 100%
                             st.subheader("All Class Probabilities")
@@ -327,7 +324,6 @@ if uploaded_files:
                             st.bar_chart(probs_df)
 
                             # 6. Save results for export
-                            # (This part is unchanged and works with the logic above)
                             row = {"File NAme" : uploaded_file.name,
                                 "Model Name" : model_name,
                                 "Prediction" : top_class_name, # Saves the highest-prob one
