@@ -36,6 +36,8 @@ MODEL_FILENAME_Exp_V1 = "exp_8stages_v1.pth"
 MODEL_FILENAME_ViT_ep120 = "vit_bs42_ep120_all_sites_95_5_focal1.5.pth"
 MODEL_FILENAME_ResNet_ep120 = "resnet50_bs42_ep120_all_sites_95_5_focal1.5.pth"
 
+if 'uploader_key' not in st.session_state:
+    st.session_state.uploader_key = 0
 
 @st.cache_resource
 def load_model(repo_id, filename, model_class):
@@ -65,7 +67,7 @@ def load_model(repo_id, filename, model_class):
         return None
 
 def clear_uploads():
-    st.session_state.file_uploader = []
+    st.session_state.uploader_key += 1
 
 def preprocess_image(image_pil):
     """
@@ -202,7 +204,7 @@ uploaded_files = st.file_uploader(
     "Upload one or more images",
     type=["jpg", "jpeg", "png"],
     accept_multiple_files=True,
-    key="file_uploader"
+    key=f"uploader_{st.session_state.uploader_key}" #Updated to fix ValueAssignmentNotAllowedError
 )
 
 st.button("Clear Uploaded Images", on_click=clear_uploads)
