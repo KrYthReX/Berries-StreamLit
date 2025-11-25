@@ -53,7 +53,7 @@ class ResNet50(nn.Module):
 class ViT(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
-        self.model = models.vit_b_16(pretrained=True)
+        self.model = models.vit_b_16(weights=ViT_B_16_Weights.DEFAULT)
         self.model.heads.head = nn.Linear(self.model.heads.head.in_features, num_classes)
 
     def forward(self, x):
@@ -61,8 +61,8 @@ class ViT(nn.Module):
 class MobileNetV3Large(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
-        # self.model = models.mobilenet_v3_large(weights=models.MobileNet_V3_Large_Weights.DEFAULT)
-        self.model = models.mobilenet_v3_large(weights=ViT_B_16_Weights.DEFAULT)
+        self.model = models.mobilenet_v3_large(weights=models.MobileNet_V3_Large_Weights.DEFAULT)
+        # self.model = models.mobilenet_v3_large(weights=ViT_B_16_Weights.DEFAULT)
         self.model.classifier[3] = nn.Linear(self.model.classifier[3].in_features, num_classes)
 
     def forward(self, x):
