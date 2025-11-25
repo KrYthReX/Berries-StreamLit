@@ -226,7 +226,7 @@ if uploaded_files:
                     
                     # Create columns for side-by-side view
                 col1, col2 = st.columns(2)
-                col1.image(image_unprocessed, caption="Original Image", use_container_width=True)
+                col1.image(image_unprocessed, caption="Original Image", width='content')
 
 
                 image_to_display = image_unprocessed
@@ -240,7 +240,7 @@ if uploaded_files:
                     base_width = int(selected_width)
                     image_to_display = resize_image(image_to_display, base_width)
                 
-                col2.image(image_to_display, caption="Processed Image", use_container_width=True)
+                col2.image(image_to_display, caption="Processed Image", width='content')
 
                 
                 # 1. Preprocess the image
