@@ -223,22 +223,6 @@ if uploaded_files:
                 st.subheader(f"Analyzing: {uploaded_file.name}")
 
                 image_unprocessed = Image.open(uploaded_file)
-                
-                # try:
-                #     image_unprocessed = Image.open(uploaded_file)
-
-                #     image_datetime = "N/A"
-
-                #     if st.session_state.include_datetime:
-                #         try:
-                #             metadata = image_unprocessed._getexif()
-
-                #             if metadata:
-                #                 image_datetime = metadata.get(36867, metadata.get(306, "n/a"))
-                            
-                #         except Exception as e:
-                #             #Metadata is not present, or issue getting data
-                #             pass
                     
                     # Create columns for side-by-side view
                 col1, col2 = st.columns(2)
@@ -284,7 +268,7 @@ if uploaded_files:
                                 logits = model_to_run(image_tensor)
                                 probabilities = torch.nn.functional.softmax(logits, dim=1)
 
-                        if model_name == "Expert":
+                        # if model_name == "Expert":
                             
                             # 2a. Get MULTI-LABEL probabilities using sigmoid
                             probabilities = torch.sigmoid(logits)
@@ -296,7 +280,7 @@ if uploaded_files:
                             
                             if len(predicted_indices) > 0:
                                 predicted_labels = [PHENOLOGY_STAGES[i] for i in predicted_indices]
-                                # Get the confidence of the top-most prediction from this list
+                                # Get the confidence of the top most prediction from this list
                                 top_label_confidence = probs_np[predicted_indices].max()
                                 display_value = ", ".join(predicted_labels)
                             else:
@@ -317,76 +301,27 @@ if uploaded_files:
                             top_prob = probs_np[top_class_index]
 
                         
-                        else:
-                            # 2b. Run original MULTI-CLASS logic
-                            probabilities = torch.nn.functional.softmax(logits, dim=1)
-                            probs_np = probabilities[0].numpy()
+                        # else:
+                        #     # 2b. Run original MULTI-CLASS logic
+                        #     probabilities = torch.nn.functional.softmax(logits, dim=1)
+                        #     probs_np = probabilities[0].numpy()
 
-                            # 3b. Get top prediction
-                            top_prob = probs_np.max()
-                            top_class_index = probs_np.argmax()
-                            top_class_name = PHENOLOGY_STAGES[top_class_index]
+                        #     # 3b. Get top prediction
+                        #     top_prob = probs_np.max()
+                        #     top_class_index = probs_np.argmax()
+                        #     top_class_name = PHENOLOGY_STAGES[top_class_index]
 
-                            # 4b. Display Metric (Multi-Class)
-                            st.metric(
-                                label=f"Top Prediction",
-                                value=f"{top_class_name}",
-                                delta=f"Confidence: {top_prob:.2%}",
-                                delta_color="normal"
-                            )
+                        #     # 4b. Display Metric (Multi-Class)
+                        #     st.metric(
+                        #         label=f"Top Prediction",
+                        #         value=f"{top_class_name}",
+                        #         delta=f"Confidence: {top_prob:.2%}",
+                        #         delta_color="normal"
+                        #     )
 
                         # 5. Display Chart
-                        # - Softmax: Bars will sum to 100%
-                        # - Sigmoid: Bars will NOT sum to 100%
+                        # - Softmax: Bars will sum to 100% (multi-class classification)
+                        # - Sigmoid: Bars will NOT sum to 100% (multi-label classification)
                         st.subheader("All Class Probabilities")
                         probs_df = pd.DataFrame(probs_np, index=PHENOLOGY_STAGES, columns=["Probability"])
                         st.bar_chart(probs_df)
-
-                        # 6. Save results for export
-                        row = {"File NAme" : uploaded_file.name,
-                            "Model Name" : model_name,
-                            "Prediction" : top_class_name, # Saves the highest-prob one
-                            "Confidence" : f"{top_prob:.4f}"}
-                            
-                            # if st.session_state.include_datetime:
-                            #     row["Image Date/Time"] = image_datetime
-                            # st.session_state.analysis_results.append(row)
-
-
-                                # # 3. Get top prediction
-                                # top_prob = probabilities[0].max().item()
-                                # top_class_index = probabilities[0].argmax().item()
-                                # top_class_name = PHENOLOGY_STAGES[top_class_index]
-
-                                
-                                # # 4. Display Metric
-                                # st.metric(
-                                #     label=f"Top Prediction",
-                                #     value=f"{top_class_name}",
-                                #     delta=f"Confidence: {top_prob:.2%}",
-                                #     delta_color="normal"
-                                # )
-
-                                # # 5. Display Chart
-                                # st.subheader("All Class Probabilities")
-                                # probs_df = pd.DataFrame(probabilities[0].numpy(), index=PHENOLOGY_STAGES, columns=["Probability"])
-                                # st.bar_chart(probs_df)
-
-                                # row = {"File NAme" : uploaded_file.name,
-                                #        "Model Name" : model_name,
-                                #        "Prediction" : top_class_name,
-                                #        "Confidence" : f"{top_prob:.4f}"}
-                                
-                                # if st.session_state.include_datetime:
-                                #     row["Image Date/Time"] = image_datetime
-                                # st.session_state.analysis_results.append(row)
-
-                    # except Exception as e:
-                    #     st.error(f"Failed to process {uploaded_file.name}: {e}")
-
-                # ...
-
-
-
-# if st.session_state.page == 1: ...
-# elif st.session_state.page == 2: ...
