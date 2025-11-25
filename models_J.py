@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 from torchvision.models import ResNet50_Weights
+from torchvision.models import ViT_B_16_Weights
 
 # Dynamic flatten CNN
 class SimpleCNN(nn.Module):
@@ -60,7 +61,8 @@ class ViT(nn.Module):
 class MobileNetV3Large(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
-        self.model = models.mobilenet_v3_large(weights=models.MobileNet_V3_Large_Weights.DEFAULT)
+        # self.model = models.mobilenet_v3_large(weights=models.MobileNet_V3_Large_Weights.DEFAULT)
+        self.model = models.mobilenet_v3_large(weights=ViT_B_16_Weights.DEFAULT)
         self.model.classifier[3] = nn.Linear(self.model.classifier[3].in_features, num_classes)
 
     def forward(self, x):
