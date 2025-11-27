@@ -11,7 +11,7 @@ import pandas as pd
 import torch.nn as nn
 from huggingface_hub import hf_hub_download
 
-from models_J import ViT, ResNet50, Expert_V1, SimpleCNN
+from models_J import ViT, ResNet50, Expert_V1, SimpleCNN, ConvNeXtBase
 
 st.set_page_config(layout="wide")
 
