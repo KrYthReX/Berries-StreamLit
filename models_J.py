@@ -1,4 +1,5 @@
 # models.py
+import timm
 import torch
 import torch.nn as nn
 import torchvision.models as models
@@ -96,7 +97,6 @@ class Expert_V1(nn.Module):
 class ConvNeXtBase(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
-        import timm
         self.model = timm.create_model(
             "convnext_base",
             pretrained=True,
