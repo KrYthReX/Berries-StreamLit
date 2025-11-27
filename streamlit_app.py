@@ -135,7 +135,7 @@ MODELS_TO_LOAD = {
     },
     "ConvNet":{
         "filename": MODEL_FILENAME_ConvNext,
-        "class": SimpleCNN
+        "class": ConvNeXtBase
     }
 }
 

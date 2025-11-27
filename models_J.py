@@ -92,6 +92,19 @@ class Expert_V1(nn.Module):
     def forward(self, x):
         x = self.conv(x)
         return self.fc(x)
+    
+class ConvNeXtBase(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+        import timm
+        self.model = timm.create_model(
+            "convnext_base",
+            pretrained=True,
+            num_classes=num_classes
+        )
+
+    def forward(self, x):
+        return self.model(x)
 
 class EfficientNetB0(nn.Module):
     def __init__(self, num_classes):
