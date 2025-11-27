@@ -128,12 +128,12 @@ MODELS_TO_LOAD = {
         "filename": MODEL_FILENAME_ResNet_ep120,
         "class": ResNet50
     },
-    "Expert": {
+    "Moe (Experts)": {
         "filename": MODEL_FILENAME_Exp_V1,
         "class": Expert_V1
     # }
     },
-    "ConvNet":{
+    "ConvNeXTBase":{
         "filename": MODEL_FILENAME_ConvNext,
         "class": ConvNeXtBase
     }
