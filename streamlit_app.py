@@ -11,7 +11,7 @@ import pandas as pd
 import torch.nn as nn
 from huggingface_hub import hf_hub_download
 
-from models_J import ViT, ResNet50, Expert_V1
+from models_J import ViT, ResNet50, Expert_V1, SimpleCNN
 
 st.set_page_config(layout="wide")
 
@@ -35,6 +35,8 @@ MODEL_FILENAME_Exp_V1 = "exp_8stages_v1.pth"
 
 MODEL_FILENAME_ViT_ep120 = "vit_bs42_ep120_all_sites_95_5_focal1.5.pth"
 MODEL_FILENAME_ResNet_ep120 = "resnet50_bs42_ep120_all_sites_95_5_focal1.5.pth"
+
+MODEL_FILENAME_ConvNext = "convnext_base_bs42_ep120_all_sites_95_5.pth"
 
 if 'uploader_key' not in st.session_state:
     st.session_state.uploader_key = 0
@@ -63,7 +65,7 @@ def load_model(repo_id, filename, model_class):
         return model
     except Exception as e:
         st.error(f"Error loading model from state_dict: {e}")
-        st.error("Test.")
+        # st.error("Test.")
         return None
 
 def clear_uploads():
@@ -129,6 +131,10 @@ MODELS_TO_LOAD = {
     "Expert": {
         "filename": MODEL_FILENAME_Exp_V1,
         "class": Expert_V1
+    },
+    "ConvNet":{
+        "filename": MODEL_FILENAME_ConvNext,
+        "class": SimpleCNN
     }
 }
 
