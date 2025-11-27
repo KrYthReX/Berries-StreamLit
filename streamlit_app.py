@@ -197,9 +197,9 @@ else:
 #     key="include_datetime"
 # )
 
-if st.button("Clear Results"):
-    st.session_state.analysis_results = []
-    st.toast("Stored analysis results cleared.")
+# if st.button("Clear Results"):
+#     st.session_state.analysis_results = []
+#     st.toast("Stored analysis results cleared.")
 
 st.header("3. Upload Images")
 st.caption("Do not upload more than 50 images at a time. Doing so may cause instability in the app.")
