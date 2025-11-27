@@ -131,12 +131,12 @@ MODELS_TO_LOAD = {
     "Expert": {
         "filename": MODEL_FILENAME_Exp_V1,
         "class": Expert_V1
-    }
-    # },
-    # "ConvNet":{
-    #     "filename": MODEL_FILENAME_ConvNext,
-    #     "class": SimpleCNN
     # }
+    },
+    "ConvNet":{
+        "filename": MODEL_FILENAME_ConvNext,
+        "class": SimpleCNN
+    }
 }
 
 LOADED_MODELS = {}
