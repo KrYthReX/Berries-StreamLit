@@ -6,6 +6,9 @@ import torchvision.models as models
 from torchvision.models import ResNet50_Weights
 from torchvision.models import ViT_B_16_Weights
 
+#NOTE: models_J.py is different for training and Streamlit usecases. 
+# Please use their respective versions for their intended purposes.
+
 # Dynamic flatten CNN
 class SimpleCNN(nn.Module):
     def __init__(self, num_classes):

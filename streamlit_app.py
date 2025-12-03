@@ -1,4 +1,13 @@
 # streamlit run streamlit_app_modified.py
+"""Simple Streamlit app for analyzing berry images with pretrained models.
+
+This app lets users upload multiple images, optionally crop a metadata bar,
+resize images, and run one or more pretrained models (from HuggingFace) to
+predict phenology stages. Major helper functions are documented concisely.
+
+Models are hosted on HuggingFace (HF) and were trained using PyTorch.
+Respective files are located on the central SSSC Berry Project repo.
+"""
 
 import streamlit as st
 # import cv2
@@ -43,9 +52,15 @@ if 'uploader_key' not in st.session_state:
 
 @st.cache_resource
 def load_model(repo_id, filename, model_class):
-    """
-    Loads in trained mode in eval mode
-    model_path to .pth file
+    """Download and load a PyTorch model from HuggingFace.
+
+    Args:
+        repo_id (str): HF repository id containing the model file.
+        filename (str): Name of the .pth file in the repo.
+        model_class (callable): Constructor for the model architecture.
+
+    Returns:
+        torch.nn.Module or None: The loaded model in eval mode, or None on error.
     """
     # st.info(f"Downloading/loading model: {filename} from {repo_id}...")
     try:
@@ -69,6 +84,10 @@ def load_model(repo_id, filename, model_class):
         return None
 
 def clear_uploads():
+    """Increment the uploader key to clear the Streamlit file uploader.
+
+    Streamlit's file_uploader keeps state; changing the key forces a reset.
+    """
     st.session_state.uploader_key += 1
 
 def preprocess_image(image_pil):
@@ -140,6 +159,8 @@ MODELS_TO_LOAD = {
 }
 
 LOADED_MODELS = {}
+# Load available models from HuggingFace into `LOADED_MODELS`.
+# Each entry will be either a loaded torch model or a string indicating failure.
 # st.balloons("Loading models...")
 for model_name, model_info in MODELS_TO_LOAD.items():
     if "YOUR_" in model_info["filename"]:
@@ -221,91 +242,85 @@ if uploaded_files:
     if not model_choices:
         st.error("Please select at least one model from Step 2 before uploading.")
     else:
-        
         st.success(f"Processing {len(uploaded_files)} images with {len(model_choices)} model(s)...")
-        
-        # Loop through each uploaded file
+
+        # Processing loop: for each uploaded image
+        # Steps: display original, optionally crop/resize, preprocess tensor,
+        # run each selected model, then display metrics and probability chart.
         for uploaded_file in uploaded_files:
-                st.divider()
-                st.subheader(f"Analyzing: {uploaded_file.name}")
+            st.divider()
+            st.subheader(f"Analyzing: {uploaded_file.name}")
 
-                image_unprocessed = Image.open(uploaded_file)
-                    
-                    # Create columns for side-by-side view
-                col1, col2 = st.columns(2)
-                col1.image(image_unprocessed, caption="Original Image", width='content')
+            image_unprocessed = Image.open(uploaded_file)
 
+            # Create columns for side-by-side view
+            col1, col2 = st.columns(2)
+            col1.image(image_unprocessed, caption="Original Image", width='content')
 
-                image_to_display = image_unprocessed
-                
-                if crop_image:
-                    image_array = np.array(image_unprocessed)
-                    cropped_array = crop_metadata_bar(image_array)
-                    image_to_display = Image.fromarray(cropped_array)
+            image_to_display = image_unprocessed
 
-                if selected_width != "original":
-                    base_width = int(selected_width)
-                    image_to_display = resize_image(image_to_display, base_width)
-                
-                col2.image(image_to_display, caption="Processed Image", width='content')
+            # Optional crop to remove metadata bar
+            if crop_image:
+                image_array = np.array(image_unprocessed)
+                cropped_array = crop_metadata_bar(image_array)
+                image_to_display = Image.fromarray(cropped_array)
 
-                
-                # 1. Preprocess the image
-                image_tensor = preprocess_image(image_to_display)
-                
-                # 2. Create columns for the results, one for each model
-                result_columns = st.columns(len(model_choices))
+            # Optional resize to selected width
+            if selected_width != "original":
+                base_width = int(selected_width)
+                image_to_display = resize_image(image_to_display, base_width)
 
-                # 3. Loop through each CHOSEN model and run analysis
-                for i, model_name in enumerate(model_choices):
-                    
-                    # Get the column for this model
-                    with result_columns[i]:
-                        st.subheader(model_name) # Add header for clarity
-                        model_to_run = LOADED_MODELS[model_name]
+            col2.image(image_to_display, caption="Processed Image", width='content')
 
-                        if model_to_run is None or isinstance(model_to_run, str):
-                            st.error(f"Model '{model_name}' is not loaded.")
-                            continue # Skip to the next model
+            # 1. Convert image to model input tensor
+            image_tensor = preprocess_image(image_to_display)
 
-                        with st.spinner(f"Model ({model_name}) is analyzing {uploaded_file.name}..."):
-                            
-                            # 2. Run inference
-                            with torch.no_grad():
-                                logits = model_to_run(image_tensor)
-                                probabilities = torch.nn.functional.softmax(logits, dim=1)
+            # 2. Create columns for the results, one for each model
+            result_columns = st.columns(len(model_choices))
 
-                        # if model_name == "Expert":
-                            
-                            # 2a. Get MULTI-LABEL probabilities using sigmoid
-                            probabilities = torch.sigmoid(logits)
-                            probs_np = probabilities[0].numpy()
-                            
-                            # 3a. Get all predictions above a threshold
-                            threshold = 0.5 # Make this a slider? Change threshold to .7?
-                            predicted_indices = (probs_np > threshold).nonzero()[0]
-                            
-                            if len(predicted_indices) > 0:
-                                predicted_labels = [PHENOLOGY_STAGES[i] for i in predicted_indices]
-                                # Get the confidence of the top most prediction from this list
-                                top_label_confidence = probs_np[predicted_indices].max()
-                                display_value = ", ".join(predicted_labels)
-                            else:
-                                display_value = "No labels above threshold"
-                                top_label_confidence = probs_np.max() # Show highest even if below thresh
+            # 3. Loop through each CHOSEN model and run analysis
+            for i, model_name in enumerate(model_choices):
+                # Get the column for this model
+                with result_columns[i]:
+                    st.subheader(model_name)  # Add header for clarity
+                    model_to_run = LOADED_MODELS[model_name]
 
-                            # 4a. Display Metric (Multi-Label)
-                            st.metric(
-                                # label=f"Predictions (Threshold > {threshold*100}%)",
-                                label = f"Predictions (Threshold > 50%)",
-                                value=display_value,
-                                delta=f"Top Confidence: {top_label_confidence:.2%}" if len(predicted_indices) > 0 else None,
-                                delta_color="normal"
-                            )
-                            
-                            top_class_index = probs_np.argmax()
-                            top_class_name = PHENOLOGY_STAGES[top_class_index]
-                            top_prob = probs_np[top_class_index]
+                    if model_to_run is None or isinstance(model_to_run, str):
+                        st.error(f"Model '{model_name}' is not loaded.")
+                        continue  # Skip to the next model
+
+                    with st.spinner(f"Model ({model_name}) is analyzing {uploaded_file.name}..."):
+                        # Run inference (no_grad for efficiency)
+                        with torch.no_grad():
+                            logits = model_to_run(image_tensor)
+
+                        # Treat model as multi-label expert: use sigmoid
+                        probabilities = torch.sigmoid(logits)
+                        probs_np = probabilities[0].numpy()
+
+                        # Filter predictions above a fixed threshold
+                        threshold = 0.5
+                        predicted_indices = (probs_np > threshold).nonzero()[0]
+
+                        if len(predicted_indices) > 0:
+                            predicted_labels = [PHENOLOGY_STAGES[i] for i in predicted_indices]
+                            top_label_confidence = probs_np[predicted_indices].max()
+                            display_value = ", ".join(predicted_labels)
+                        else:
+                            display_value = "No labels above threshold"
+                            top_label_confidence = probs_np.max()
+
+                        # Display compact metric for multi-label prediction
+                        st.metric(
+                            label=f"Predictions (Threshold > 50%)",
+                            value=display_value,
+                            delta=(f"Top Confidence: {top_label_confidence:.2%}" if len(predicted_indices) > 0 else None),
+                            delta_color="normal"
+                        )
+
+                        top_class_index = probs_np.argmax()
+                        top_class_name = PHENOLOGY_STAGES[top_class_index]
+                        top_prob = probs_np[top_class_index]
 
                         
                         # else:
